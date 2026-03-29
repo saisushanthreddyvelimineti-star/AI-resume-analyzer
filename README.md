@@ -1,6 +1,6 @@
 # 🚀 AI Resume Analyzer
 
-An AI-powered web app that analyzes resumes, identifies skill gaps, provides a personalized roadmap and suggests jobs that can be applied from Linkedin and naukri.
+An AI-powered web app that analyzes resumes, identifies skill gaps, provides a personalized roadmap and suggests jobs that can be applied from Linkedin and indeed.
 
 ## 🔥 Features
 - Resume summary using AI
