@@ -1,6 +1,6 @@
 # 🚀 AI Resume Analyzer
 
-An AI-powered web app that analyzes resumes, identifies skill gaps, and provides a personalized roadmap.
+An AI-powered web app that analyzes resumes, identifies skill gaps, provides a personalized roadmap and suggests jobs that can be applied from Linkedin and naukri.
 
 ## 🔥 Features
 - Resume summary using AI
@@ -13,6 +13,7 @@ An AI-powered web app that analyzes resumes, identifies skill gaps, and provides
 - Streamlit
 - OpenAI API
 - Apify API
+- PyMuPDF
 
 ## ▶️ Run Locally
 ```bash
