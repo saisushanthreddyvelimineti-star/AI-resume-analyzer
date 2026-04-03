@@ -1,21 +1,62 @@
-# 🚀 AI Resume Analyzer
+# Gaia Career Studio
 
-An AI-powered web app that analyzes resumes, identifies skill gaps, provides a personalized roadmap and suggests jobs that can be applied from Linkedin and indeed.
+Gaia Career Studio is a two-part application:
 
-## 🔥 Features
-- Resume summary using AI
-- Skill gap analysis
-- Career roadmap generation
-- Job recommendations
+- `frontend/`: Vite + React environmental-science themed UI
+- `backend_app.py`: FastAPI API for resume analysis, job suggestions, and interview coaching
 
-## 🛠️ Tech Stack
-- Python
-- Streamlit
-- OpenAI API
-- Apify API
-- PyMuPDF
+## Features
 
-## ▶️ Run Locally
+- PDF resume analysis
+- AI-generated summary, gaps, and roadmap
+- Job recommendation flow with live or demo fallback
+- Voice and text interview coaching
+- Eco-themed frontend experience
+
+## Local Run
+
+### Backend
+
+Create `.env` in the project root:
+
+```env
+OPENAI_API_KEY=...
+APIFY_API_TOKEN=...
+```
+
+Run:
+
 ```bash
-pip install -r requirements.txt
-streamlit run app.py
+uvicorn backend_app:app --reload --host 127.0.0.1 --port 8000
+```
+
+### Frontend
+
+Create `frontend/.env`:
+
+```env
+VITE_API_BASE_URL=http://127.0.0.1:8000
+```
+
+Run:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+## Deploy
+
+See [DEPLOY.md](/C:/Users/sushanth/OneDrive%20-%20Northumbria%20University%20-%20Production%20Azure%20AD/Desktop/JobRecommendationsystem/DEPLOY.md).
+
+Recommended hosting:
+
+- Frontend on Vercel
+- Backend on Render
+
+## Deployment Files
+
+- [render.yaml](/C:/Users/sushanth/OneDrive%20-%20Northumbria%20University%20-%20Production%20Azure%20AD/Desktop/JobRecommendationsystem/render.yaml)
+- [Procfile](/C:/Users/sushanth/OneDrive%20-%20Northumbria%20University%20-%20Production%20Azure%20AD/Desktop/JobRecommendationsystem/Procfile)
+- [frontend/vercel.json](/C:/Users/sushanth/OneDrive%20-%20Northumbria%20University%20-%20Production%20Azure%20AD/Desktop/JobRecommendationsystem/frontend/vercel.json)
