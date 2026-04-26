@@ -7,10 +7,11 @@ from src.helper import (
     ask_openai,
     extract_text_from_pdf,
     has_openai_config,
+    suggest_job_keywords,
     synthesize_speech,
     transcribe_audio,
 )
-from src.job_api import fetch_linkedin_jobs, fetch_naukri_jobs, has_apify_config
+from src.job_api import fetch_indeed_jobs, fetch_linkedin_jobs, generate_demo_jobs, has_apify_config
 
 
 st.set_page_config(page_title="Jarvis Career Studio", layout="wide")
@@ -30,7 +31,7 @@ def init_state() -> None:
         "analysis_ready": False,
         "job_keywords": "",
         "linkedin_jobs": [],
-        "naukri_jobs": [],
+        "indeed_jobs": [],
         "jarvis_history": [],
         "jarvis_reply_audio": None,
         "jarvis_prompt": "",
@@ -119,8 +120,11 @@ def render_chat(role: str, content: str) -> None:
     st.markdown(
         f"""
         <div class="chat-bubble {shell}">
-            <div class="chat-label">{esc(label)}</div>
-            <div>{esc(content)}</div>
+            <div class="chat-topline">
+                <div class="chat-avatar">{esc(label[:1])}</div>
+                <div class="chat-label">{esc(label)}</div>
+            </div>
+            <div class="chat-copy">{esc(content)}</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -139,7 +143,7 @@ def reset_resume_dependent_state() -> None:
     st.session_state.analysis_ready = False
     st.session_state.job_keywords = ""
     st.session_state.linkedin_jobs = []
-    st.session_state.naukri_jobs = []
+    st.session_state.indeed_jobs = []
     st.session_state.jarvis_history = []
     st.session_state.jarvis_reply_audio = None
 
@@ -175,14 +179,36 @@ def analyze_resume(uploaded_file) -> None:
 
 
 def generate_jobs() -> None:
-    keywords = ask_openai(
-        "Based on this resume summary, suggest the best job titles and search keywords. Return a "
-        f"comma-separated list only, with no explanation.\n\nSummary: {st.session_state.summary}",
-        max_tokens=100,
-    )
-    st.session_state.job_keywords = keywords.replace("\n", " ").strip()
-    st.session_state.linkedin_jobs = fetch_linkedin_jobs(st.session_state.job_keywords, rows=9)
-    st.session_state.naukri_jobs = fetch_naukri_jobs(st.session_state.job_keywords, rows=9)
+    location = "United Kingdom"
+
+    if has_openai_config():
+        try:
+            keywords = ask_openai(
+                "Based on this resume summary, suggest the best job titles and search keywords. Return a "
+                f"comma-separated list only, with no explanation.\n\nSummary: {st.session_state.summary}",
+                max_tokens=100,
+            )
+            st.session_state.job_keywords = keywords.replace("\n", " ").strip()
+        except Exception:
+            st.session_state.job_keywords = ", ".join(suggest_job_keywords(st.session_state.summary))
+    else:
+        st.session_state.job_keywords = ", ".join(suggest_job_keywords(st.session_state.summary))
+
+    if has_apify_config():
+        try:
+            linkedin_jobs = fetch_linkedin_jobs(st.session_state.job_keywords, location=location, rows=9)
+            st.session_state.linkedin_jobs = linkedin_jobs or generate_demo_jobs(st.session_state.job_keywords, location=location, rows=6)
+        except Exception:
+            st.session_state.linkedin_jobs = generate_demo_jobs(st.session_state.job_keywords, location=location, rows=6)
+
+        try:
+            indeed_jobs = fetch_indeed_jobs(st.session_state.job_keywords, location=location, rows=9)
+            st.session_state.indeed_jobs = indeed_jobs or generate_demo_jobs(st.session_state.job_keywords, location=location, rows=6)
+        except Exception:
+            st.session_state.indeed_jobs = generate_demo_jobs(st.session_state.job_keywords, location=location, rows=6)
+    else:
+        st.session_state.linkedin_jobs = generate_demo_jobs(st.session_state.job_keywords, location=location, rows=6)
+        st.session_state.indeed_jobs = generate_demo_jobs(st.session_state.job_keywords, location=location, rows=6)
 
 
 def run_jarvis(prompt: str) -> None:
@@ -347,7 +373,7 @@ st.markdown(
     .blue { color: var(--blue); }
     .gold { color: var(--gold); }
 
-    .insight-card, .job-card, .chat-shell, .prompt-card {
+    .insight-card, .job-card, .chat-shell, .prompt-card, .copilot-strip {
         border: 1px solid var(--line);
         border-radius: 24px;
         padding: 1.15rem;
@@ -420,26 +446,82 @@ st.markdown(
         font-weight: 700;
     }
 
+    .copilot-strip {
+        margin-bottom: 1rem;
+        background: linear-gradient(145deg, rgba(10, 25, 46, 0.98), rgba(12, 28, 47, 0.88));
+    }
+
+    .copilot-title {
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 1.15rem;
+        margin-bottom: 0.35rem;
+    }
+
+    .copilot-copy {
+        color: var(--muted);
+        line-height: 1.7;
+        margin-bottom: 0.85rem;
+    }
+
+    .copilot-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.55rem;
+    }
+
+    .copilot-pill {
+        padding: 0.48rem 0.72rem;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+        font-size: 0.84rem;
+    }
+
     .chat-shell {
         min-height: 430px;
+        background: linear-gradient(180deg, rgba(4, 13, 25, 0.94), rgba(8, 19, 33, 0.92));
+        border: 1px solid rgba(124, 247, 212, 0.10);
     }
 
     .chat-bubble {
         border-radius: 18px;
-        padding: 0.9rem 1rem;
+        padding: 0.9rem 1rem 1rem;
         margin-bottom: 0.75rem;
         line-height: 1.75;
         white-space: pre-wrap;
+        backdrop-filter: blur(14px);
     }
 
     .chat-user {
-        background: rgba(116, 165, 255, 0.11);
-        border: 1px solid rgba(116, 165, 255, 0.18);
+        background: linear-gradient(180deg, rgba(116, 165, 255, 0.14), rgba(50, 79, 123, 0.18));
+        border: 1px solid rgba(116, 165, 255, 0.22);
     }
 
     .chat-assistant {
-        background: rgba(124, 247, 212, 0.08);
-        border: 1px solid rgba(124, 247, 212, 0.16);
+        background: linear-gradient(180deg, rgba(124, 247, 212, 0.10), rgba(23, 48, 58, 0.22));
+        border: 1px solid rgba(124, 247, 212, 0.18);
+    }
+
+    .chat-topline {
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        margin-bottom: 0.55rem;
+    }
+
+    .chat-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "Space Grotesk", sans-serif;
+        font-weight: 700;
+        color: #07101d;
+        background: linear-gradient(145deg, var(--mint), var(--blue));
+        box-shadow: 0 0 18px rgba(124, 247, 212, 0.18);
     }
 
     .chat-label {
@@ -447,7 +529,37 @@ st.markdown(
         text-transform: uppercase;
         letter-spacing: 0.12em;
         font-size: 0.72rem;
-        margin-bottom: 0.42rem;
+    }
+
+    .chat-copy {
+        color: var(--text);
+        line-height: 1.82;
+    }
+
+    .quick-grid {
+        display: grid;
+        gap: 0.75rem;
+        margin: 0.8rem 0 1rem;
+    }
+
+    .quick-card {
+        padding: 0.9rem 1rem;
+        border-radius: 18px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.03);
+    }
+
+    .quick-title {
+        color: var(--mint);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        font-size: 0.72rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .quick-copy {
+        color: var(--text);
+        line-height: 1.65;
     }
 
     .prompt-card {
@@ -592,6 +704,7 @@ st.markdown(
         border: 1px solid rgba(124, 247, 212, 0.12);
         border-radius: 22px;
         padding: 1rem;
+        box-shadow: inset 0 0 22px rgba(116, 165, 255, 0.06);
     }
 
     .prompt-tag {
@@ -810,7 +923,7 @@ with jobs_tab:
             """
             <div class="prompt-card">
                 <div class="prompt-tag">How this works</div>
-                Your resume summary is translated into search keywords, then LinkedIn and Naukri roles are fetched into separate columns.
+                Your resume summary is translated into search keywords, then LinkedIn and Indeed roles are fetched into separate columns.
             </div>
             """,
             unsafe_allow_html=True,
@@ -825,12 +938,12 @@ with jobs_tab:
         else:
             st.info("No LinkedIn results loaded yet.")
     with jobs_right:
-        st.markdown('<div class="section-title">Naukri Matches</div>', unsafe_allow_html=True)
-        if st.session_state.naukri_jobs:
-            for job in st.session_state.naukri_jobs:
-                render_job_card(job, "url", "Naukri")
+        st.markdown('<div class="section-title">Indeed Matches</div>', unsafe_allow_html=True)
+        if st.session_state.indeed_jobs:
+            for job in st.session_state.indeed_jobs:
+                render_job_card(job, "url", "Indeed")
         else:
-            st.info("No Naukri results loaded yet.")
+            st.info("No Indeed results loaded yet.")
 
 with coach_tab:
     reactor_talking = bool(st.session_state.jarvis_is_talking and st.session_state.jarvis_reply_audio)
@@ -839,7 +952,25 @@ with coach_tab:
         <div class="section-head">
             <div>
                 <div class="section-title">Jarvis Command Deck</div>
-                <div class="section-copy">A HUD-style interview cockpit inspired by your reference: central reactor, side telemetry, and a cleaner command console.</div>
+                <div class="section-copy">A sharper AI copilot with live chat memory, guided interview modes, and a cleaner command surface.</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        f"""
+        <div class="copilot-strip">
+            <div class="copilot-title">Career Copilot</div>
+            <div class="copilot-copy">
+                Jarvis now acts like a focused interview copilot: resume-grounded replies, faster launch modes,
+                and a clearer split between conversation, reactor state, and coaching controls.
+            </div>
+            <div class="copilot-pills">
+                <div class="copilot-pill">Memory: {len(st.session_state.jarvis_history)} turns</div>
+                <div class="copilot-pill">Voice: {'Ready' if openai_ready else 'Offline'}</div>
+                <div class="copilot-pill">Resume Context: {'Attached' if st.session_state.analysis_ready else 'Generic'}</div>
             </div>
         </div>
         """,
@@ -944,11 +1075,23 @@ with coach_tab:
             st.session_state.jarvis_is_talking = False
         st.markdown("</div>", unsafe_allow_html=True)
 
+        st.markdown(
+            """
+            <div class="quick-grid">
+                <div class="quick-card">
+                    <div class="quick-title">Best Use</div>
+                    <div class="quick-copy">Ask for answer rewrites, mock interviews, project storytelling, salary defense, and follow-up challenge questions.</div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
         st.text_area(
             "Command input",
             key="jarvis_prompt",
             height=130,
-            placeholder="Example: Simulate a data engineer interview and challenge me on trade-offs in my projects.",
+            placeholder="Example: Run a UK sustainability analyst interview and challenge me on project impact, metrics, and stakeholder communication.",
         )
         voice_clip = st.audio_input("Voice uplink")
         send_col, voice_col = st.columns(2)
@@ -983,7 +1126,26 @@ with coach_tab:
             """
             <div class="prompt-card">
                 <div class="prompt-tag">Mission Modes</div>
-                Run fast drills, generate stronger introductions, or push Jarvis into a one-question-at-a-time interview loop.
+                Launch guided interview flows instead of starting from a blank prompt.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            """
+            <div class="quick-grid">
+                <div class="quick-card">
+                    <div class="quick-title">Intro Builder</div>
+                    <div class="quick-copy">Generate a tighter first impression with stronger confidence and role alignment.</div>
+                </div>
+                <div class="quick-card">
+                    <div class="quick-title">Pressure Test</div>
+                    <div class="quick-copy">Let Jarvis ask follow-up questions and force you to defend trade-offs and outcomes.</div>
+                </div>
+                <div class="quick-card">
+                    <div class="quick-title">Answer Upgrade</div>
+                    <div class="quick-copy">Paste a weak answer and get a cleaner, more professional version back.</div>
+                </div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -997,6 +1159,12 @@ with coach_tab:
         if st.button("Launch Technical Drill", use_container_width=True, disabled=not openai_ready):
             try:
                 run_jarvis("Start a technical interview based on my resume projects and skills. Ask one question at a time.")
+                st.rerun()
+            except Exception as exc:
+                st.error(f"Jarvis failed: {exc}")
+        if st.button("Rewrite Weak Answer", use_container_width=True, disabled=not openai_ready):
+            try:
+                run_jarvis("Help me rewrite a weak interview answer into a stronger, concise, professional version with one metric and one concrete result.")
                 st.rerun()
             except Exception as exc:
                 st.error(f"Jarvis failed: {exc}")

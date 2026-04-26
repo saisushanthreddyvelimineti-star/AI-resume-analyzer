@@ -8,9 +8,12 @@ dependencies = [
     "apify-client>=2.5.0",
     "fastapi>=0.118.0",
     "openai>=2.30.0",
+    "pillow>=11.3.0",
     "pymupdf>=1.27.2.2",
+    "pytesseract>=0.3.13",
     "python-multipart>=0.0.20",
     "python-dotenv>=1.2.2",
+    "sentence-transformers>=5.1.1",
     "streamlit>=1.55.0",
     "uvicorn>=0.37.0",
 ]

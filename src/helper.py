@@ -135,18 +135,20 @@ def suggest_job_keywords(resume_summary):
     summary = resume_summary.lower()
     roles = []
     if any(word in summary for word in ["machine learning", "data", "analysis", "power bi"]):
-        roles.extend(["Data Analyst", "Business Analyst", "Machine Learning Intern"])
+        roles.extend(["Data Analyst", "Business Analyst", "Machine Learning Intern", "Reporting Analyst", "BI Analyst"])
     if any(word in summary for word in ["react", "javascript", "html", "css", "frontend"]):
-        roles.extend(["Frontend Developer", "React Developer", "UI Engineer"])
+        roles.extend(["Frontend Developer", "React Developer", "UI Engineer", "Web Developer", "Frontend Engineer"])
     if any(word in summary for word in ["python", "fastapi", "backend", "api"]):
-        roles.extend(["Python Developer", "Backend Developer", "Software Engineer"])
+        roles.extend(["Python Developer", "Backend Developer", "Software Engineer", "API Developer", "Application Developer"])
     if any(word in summary for word in ["aws", "azure", "docker", "devops"]):
-        roles.extend(["Cloud Engineer", "DevOps Engineer"])
+        roles.extend(["Cloud Engineer", "DevOps Engineer", "Platform Engineer", "Site Reliability Engineer"])
+    if any(word in summary for word in ["sql", "tableau", "excel", "dashboard"]):
+        roles.extend(["Data Analyst", "Operations Analyst", "Insights Analyst"])
     if not roles:
-        roles = ["Software Engineer", "Graduate Engineer", "Analyst"]
+        roles = ["Software Engineer", "Graduate Engineer", "Analyst", "Operations Coordinator", "Project Associate"]
     # Preserve order while deduplicating.
     deduped_roles = list(dict.fromkeys(roles))
-    return deduped_roles[:5]
+    return deduped_roles[:10]
 
 
 def fallback_interview_reply(resume_summary, user_prompt):

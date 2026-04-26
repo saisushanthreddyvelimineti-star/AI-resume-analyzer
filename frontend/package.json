@@ -9,12 +9,17 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "duix-guiji-light": "^0.4.0",
     "framer-motion": "^12.9.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
     "@vitejs/plugin-react": "^5.0.3",
+    "autoprefixer": "^10.5.0",
+    "postcss": "^8.5.10",
+    "tailwindcss": "^3.4.18",
     "vite": "^7.1.3"
   }
 }
